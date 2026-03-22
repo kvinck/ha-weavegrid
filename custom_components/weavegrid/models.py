@@ -1,0 +1,147 @@
+"""Data models for the WeaveGrid integration."""
+
+from __future__ import annotations
+
+from dataclasses import dataclass, field
+from typing import Any
+
+
+@dataclass
+class ConnectivityDetail:
+    """Connectivity status for a vehicle or EVSE."""
+
+    is_active: bool
+    is_charging: bool
+    is_plugged_in: bool
+    is_home: bool
+
+    @classmethod
+    def from_dict(cls, data: dict[str, Any]) -> ConnectivityDetail:
+        """Create from API response dict."""
+        return cls(
+            is_active=data["isActive"],
+            is_charging=data["isCharging"],
+            is_plugged_in=data["isPluggedIn"],
+            is_home=data["isHome"],
+        )
+
+
+@dataclass
+class Vehicle:
+    """A vehicle or EVSE from the dashboard."""
+
+    vehicle_id: str
+    display_name: str
+    is_active: bool
+    is_evse: bool
+    oem_name: str
+    connectivity: ConnectivityDetail
+
+    @classmethod
+    def from_dict(cls, data: dict[str, Any]) -> Vehicle:
+        """Create from API response dict."""
+        return cls(
+            vehicle_id=data["vehicleId"],
+            display_name=data["displayName"],
+            is_active=data["isActive"],
+            is_evse=data["isEvse"],
+            oem_name=data["oem"]["name"],
+            connectivity=ConnectivityDetail.from_dict(data["connectivityDetail"]),
+        )
+
+
+@dataclass
+class McPlanStatus:
+    """Managed charge plan status."""
+
+    mc_status: str
+    plan_is_active: bool
+    optimization: str
+    ready_by_dttm: str | None
+    charge_start_dttm: str | None
+    miles_added_by_ready_by_time: float | None
+
+    @classmethod
+    def from_dict(cls, data: dict[str, Any]) -> McPlanStatus:
+        """Create from API response dict."""
+        return cls(
+            mc_status=data["mcStatus"],
+            plan_is_active=data["planIsActive"],
+            optimization=data["optimization"],
+            ready_by_dttm=data.get("readyByDttm"),
+            charge_start_dttm=data.get("chargeStartDttm"),
+            miles_added_by_ready_by_time=data.get("milesAddedByReadyByTime"),
+        )
+
+
+@dataclass
+class DailyAggregate:
+    """Daily charge aggregate."""
+
+    usage_date: str
+    energy_kwh: float
+    charge_cost: float
+
+    @classmethod
+    def from_dict(cls, data: dict[str, Any]) -> DailyAggregate:
+        """Create from API response dict."""
+        return cls(
+            usage_date=data["usageDate"],
+            energy_kwh=data["energyDeliveredKwh"],
+            charge_cost=data["chargeCost"],
+        )
+
+
+@dataclass
+class ChargeAggregates:
+    """Charge event aggregates."""
+
+    total_charge_cost: float
+    total_energy_kwh: float
+    smart_score: float
+    daily: list[DailyAggregate] = field(default_factory=list)
+
+    @classmethod
+    def from_dict(cls, data: dict[str, Any]) -> ChargeAggregates:
+        """Create from API response dict."""
+        totals = data["totalAggregates"]["data"][0]
+        return cls(
+            total_charge_cost=totals["chargeCost"],
+            total_energy_kwh=totals["energyDeliveredKwh"],
+            smart_score=totals["smartScore"],
+            daily=[
+                DailyAggregate.from_dict(d)
+                for d in data.get("dailyAggregates", {}).get("data", [])
+            ],
+        )
+
+
+@dataclass
+class LoginResult:
+    """Login response data."""
+
+    user_id: str
+    utility_acronym: str
+    is_logged_in: bool
+    status: str
+
+    @classmethod
+    def from_dict(cls, data: dict[str, Any]) -> LoginResult:
+        """Create from API response dict."""
+        login = data["login"]
+        user = login["user"]
+        return cls(
+            user_id=user["userId"],
+            utility_acronym=user["utility"]["acronym"],
+            is_logged_in=login["isLoggedIn"],
+            status=login["status"],
+        )
+
+
+@dataclass
+class WeaveGridData:
+    """Combined data from all API calls for one vehicle."""
+
+    vehicle: Vehicle
+    status: McPlanStatus | None
+    aggregates: ChargeAggregates

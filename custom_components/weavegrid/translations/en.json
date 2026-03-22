@@ -1,0 +1,79 @@
+{
+    "config": {
+        "abort": {
+            "already_configured": "Account is already configured",
+            "reauth_successful": "Re-authentication was successful"
+        },
+        "error": {
+            "cannot_connect": "Failed to connect",
+            "invalid_auth": "Invalid authentication",
+            "unknown": "Unexpected error"
+        },
+        "step": {
+            "reauth_confirm": {
+                "data": {
+                    "password": "Password"
+                },
+                "data_description": {
+                    "password": "The password you use to log in to WeaveGrid."
+                }
+            },
+            "user": {
+                "data": {
+                    "email": "Email",
+                    "password": "Password"
+                },
+                "data_description": {
+                    "email": "The email address you use to log in to WeaveGrid.",
+                    "password": "The password you use to log in to WeaveGrid."
+                }
+            }
+        }
+    },
+    "entity": {
+        "binary_sensor": {
+            "charging": {
+                "name": "Charging"
+            },
+            "home": {
+                "name": "Home"
+            },
+            "plugged_in": {
+                "name": "Plugged in"
+            }
+        },
+        "sensor": {
+            "battery_level": {
+                "name": "Battery level"
+            },
+            "last_charge_cost": {
+                "name": "Last charge cost"
+            },
+            "last_charge_energy": {
+                "name": "Last charge energy"
+            },
+            "managed_charge_status": {
+                "name": "Managed charge status",
+                "state": {
+                    "active": "Active",
+                    "complete": "Complete",
+                    "inactive": "Inactive",
+                    "pending": "Pending",
+                    "unknown": "Unknown"
+                }
+            },
+            "miles_added": {
+                "name": "Miles added"
+            },
+            "smart_score": {
+                "name": "Smart score"
+            },
+            "weekly_cost": {
+                "name": "Weekly cost"
+            },
+            "weekly_energy": {
+                "name": "Weekly energy"
+            }
+        }
+    }
+}
