@@ -23,7 +23,14 @@ from .models import WeaveGridData
 
 PARALLEL_UPDATES = 0
 
-MC_STATUS_OPTIONS = ["complete", "active", "inactive", "pending", "unknown"]
+MC_STATUS_OPTIONS = [
+    "charging",
+    "complete",
+    "active",
+    "inactive",
+    "pending",
+    "unknown",
+]
 
 DAY_ABBR_MAP = {
     0: "Mon",
