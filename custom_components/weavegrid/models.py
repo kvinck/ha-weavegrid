@@ -75,6 +75,27 @@ class McPlanStatus:
 
 
 @dataclass
+class DeviceStatus:
+    """Device status from DeviceStatusCard query."""
+
+    mc_plan_status: McPlanStatus | None
+    battery_soc: float | None
+
+    @classmethod
+    def from_dict(cls, data: dict[str, Any]) -> DeviceStatus:
+        """Create from API vehicle data dict."""
+        battery = data.get("batteryStatus")
+        return cls(
+            mc_plan_status=(
+                McPlanStatus.from_dict(data["mcPlanStatus"])
+                if data.get("mcPlanStatus")
+                else None
+            ),
+            battery_soc=battery["currentSoc"] if battery else None,
+        )
+
+
+@dataclass
 class DailyAggregate:
     """Daily charge aggregate."""
 
@@ -99,6 +120,9 @@ class ChargeAggregates:
     total_charge_cost: float
     total_energy_kwh: float
     smart_score: float
+    off_peak_charge_cost: float
+    off_peak_energy_kwh: float
+    smart_charging_cost: float
     daily: list[DailyAggregate] = field(default_factory=list)
 
     @classmethod
@@ -109,10 +133,79 @@ class ChargeAggregates:
             total_charge_cost=totals["chargeCost"],
             total_energy_kwh=totals["energyDeliveredKwh"],
             smart_score=totals["smartScore"],
+            off_peak_charge_cost=totals.get("offPeakChargingCost", 0.0),
+            off_peak_energy_kwh=totals.get("offPeakEnergyDeliveredKwh", 0.0),
+            smart_charging_cost=totals.get("totalSmartChargingCost", 0.0),
             daily=[
                 DailyAggregate.from_dict(d)
                 for d in data.get("dailyAggregates", {}).get("data", [])
             ],
+        )
+
+
+@dataclass
+class ManagedChargeSettings:
+    """Managed charge settings for a vehicle."""
+
+    charge_by_times: dict[str, str]
+    peak_avoidance_enabled: bool
+
+    @classmethod
+    def from_dict(cls, data: dict[str, Any]) -> ManagedChargeSettings:
+        """Create from API response dict."""
+        settings = data["mcSettings"]
+        charge_by_times = settings["chargeByTimes"]
+        return cls(
+            charge_by_times={
+                k: v
+                for k, v in charge_by_times.items()
+                if k != "__typename"
+            },
+            peak_avoidance_enabled=settings["enablePeakAvoidance"],
+        )
+
+
+@dataclass
+class ChargeSession:
+    """A daily charge session aggregate."""
+
+    start_dttm: str
+    end_dttm: str
+    charge_hours: float
+    energy_kwh: float
+    charge_cost: float
+
+    @classmethod
+    def from_dict(cls, data: dict[str, Any]) -> ChargeSession:
+        """Create from API response dict."""
+        return cls(
+            start_dttm=data["startDttm"],
+            end_dttm=data["endDttm"],
+            charge_hours=data["chargeHours"],
+            energy_kwh=data["energyDeliveredKwh"],
+            charge_cost=data["chargeCost"],
+        )
+
+
+@dataclass
+class ChargeHistory:
+    """Charge history with sessions and rate info."""
+
+    sessions: list[ChargeSession]
+    latest_electricity_rate: float | None
+
+    @classmethod
+    def from_dict(cls, data: dict[str, Any]) -> ChargeHistory:
+        """Create from API charge events dict."""
+        sessions = [
+            ChargeSession.from_dict(d)
+            for d in data.get("aggregates", {}).get("data", [])
+        ]
+        spans = data.get("chargeSpans", {}).get("data", [])
+        latest_rate = spans[0]["electricityRate"] if spans else None
+        return cls(
+            sessions=sessions,
+            latest_electricity_rate=latest_rate,
         )
 
 
@@ -143,5 +236,7 @@ class WeaveGridData:
     """Combined data from all API calls for one vehicle."""
 
     vehicle: Vehicle
-    status: McPlanStatus | None
+    device_status: DeviceStatus
     aggregates: ChargeAggregates
+    settings: ManagedChargeSettings | None
+    charge_history: ChargeHistory | None

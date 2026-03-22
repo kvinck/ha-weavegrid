@@ -62,6 +62,36 @@
       },
       "battery_level": {
         "name": "Battery level"
+      },
+      "charge_start_time": {
+        "name": "Charge start time"
+      },
+      "ready_by_time": {
+        "name": "Ready by time"
+      },
+      "off_peak_energy": {
+        "name": "Weekly off-peak energy"
+      },
+      "off_peak_cost": {
+        "name": "Weekly off-peak cost"
+      },
+      "smart_charging_cost": {
+        "name": "Weekly smart charging cost"
+      },
+      "charge_by_time": {
+        "name": "Charge by time"
+      },
+      "last_session_start": {
+        "name": "Last session start"
+      },
+      "last_session_end": {
+        "name": "Last session end"
+      },
+      "last_session_duration": {
+        "name": "Last session duration"
+      },
+      "electricity_rate": {
+        "name": "Electricity rate"
       }
     },
     "binary_sensor": {
@@ -73,6 +103,12 @@
       },
       "home": {
         "name": "Home"
+      },
+      "plan_active": {
+        "name": "Charge plan active"
+      },
+      "peak_avoidance": {
+        "name": "Peak avoidance"
       }
     }
   }

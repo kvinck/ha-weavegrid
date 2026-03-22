@@ -24,7 +24,7 @@ PARALLEL_UPDATES = 0
 class WeaveGridBinarySensorDescription(BinarySensorEntityDescription):
     """Describe a WeaveGrid binary sensor."""
 
-    is_on_fn: Callable[[WeaveGridData], bool]
+    is_on_fn: Callable[[WeaveGridData], bool | None]
 
 
 DESCRIPTIONS: tuple[WeaveGridBinarySensorDescription, ...] = (
@@ -45,6 +45,24 @@ DESCRIPTIONS: tuple[WeaveGridBinarySensorDescription, ...] = (
         translation_key="home",
         device_class=BinarySensorDeviceClass.PRESENCE,
         is_on_fn=lambda data: data.vehicle.connectivity.is_home,
+    ),
+    WeaveGridBinarySensorDescription(
+        key="plan_active",
+        translation_key="plan_active",
+        is_on_fn=lambda data: (
+            data.device_status.mc_plan_status.plan_is_active
+            if data.device_status.mc_plan_status
+            else None
+        ),
+    ),
+    WeaveGridBinarySensorDescription(
+        key="peak_avoidance",
+        translation_key="peak_avoidance",
+        is_on_fn=lambda data: (
+            data.settings.peak_avoidance_enabled
+            if data.settings
+            else None
+        ),
     ),
 )
 
@@ -76,7 +94,7 @@ class WeaveGridBinarySensorEntity(
     entity_description: WeaveGridBinarySensorDescription
 
     @property
-    def is_on(self) -> bool:
+    def is_on(self) -> bool | None:
         """Return state of the binary sensor."""
         return self.entity_description.is_on_fn(
             self.coordinator.data[self._vehicle_id]

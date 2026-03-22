@@ -50,12 +50,24 @@ class WeaveGridDataUpdateCoordinator(
             vehicles = await self.client.get_dashboard_data()
             result: dict[str, WeaveGridData] = {}
             for vehicle in vehicles:
-                status = await self.client.get_device_status(vehicle.vehicle_id)
+                device_status = await self.client.get_device_status(
+                    vehicle.vehicle_id
+                )
                 aggregates = await self.client.get_charge_aggregates(
                     vehicle.vehicle_id, start_dttm, end_dttm
                 )
+                settings = await self.client.get_managed_charge_settings(
+                    vehicle.vehicle_id
+                )
+                charge_history = await self.client.get_charge_history(
+                    vehicle.vehicle_id
+                )
                 result[vehicle.vehicle_id] = WeaveGridData(
-                    vehicle=vehicle, status=status, aggregates=aggregates
+                    vehicle=vehicle,
+                    device_status=device_status,
+                    aggregates=aggregates,
+                    settings=settings,
+                    charge_history=charge_history,
                 )
             return result
         except WeaveGridAuthError as err:

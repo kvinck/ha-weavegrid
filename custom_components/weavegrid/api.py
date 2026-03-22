@@ -8,11 +8,20 @@ from .const import (
     API_URL,
     LOGGER,
     QUERY_CHARGE_AGGREGATES,
+    QUERY_CHARGE_HISTORY,
     QUERY_DASHBOARD_DATA,
     QUERY_DEVICE_STATUS,
     QUERY_LOGIN,
+    QUERY_MANAGED_CHARGE_SETTINGS,
 )
-from .models import ChargeAggregates, LoginResult, McPlanStatus, Vehicle
+from .models import (
+    ChargeAggregates,
+    ChargeHistory,
+    DeviceStatus,
+    LoginResult,
+    ManagedChargeSettings,
+    Vehicle,
+)
 
 
 class WeaveGridAuthError(Exception):
@@ -62,7 +71,7 @@ class WeaveGridClient:
             for v in data["data"]["viewer"]["vehicles"]["data"]
         ]
 
-    async def get_device_status(self, vehicle_id: str) -> McPlanStatus | None:
+    async def get_device_status(self, vehicle_id: str) -> DeviceStatus:
         """Fetch device status for a vehicle."""
         data = await self._execute(
             query=QUERY_DEVICE_STATUS,
@@ -70,9 +79,7 @@ class WeaveGridClient:
             operation_name="DeviceStatusCard",
         )
         vehicles = data["data"]["viewer"]["vehicles"]["data"]
-        if vehicles and vehicles[0].get("mcPlanStatus"):
-            return McPlanStatus.from_dict(vehicles[0]["mcPlanStatus"])
-        return None
+        return DeviceStatus.from_dict(vehicles[0])
 
     async def get_charge_aggregates(
         self,
@@ -95,6 +102,39 @@ class WeaveGridClient:
             data["data"]["viewer"]["vehicles"]["data"][0]["chargeEvents"]
         )
         return ChargeAggregates.from_dict(charge_events)
+
+    async def get_managed_charge_settings(
+        self, vehicle_id: str
+    ) -> ManagedChargeSettings | None:
+        """Fetch managed charge settings for a vehicle."""
+        data = await self._execute(
+            query=QUERY_MANAGED_CHARGE_SETTINGS,
+            variables={"vehicleId": vehicle_id},
+            operation_name="ManagedChargeSettings",
+        )
+        vehicles = data["data"]["viewer"]["vehicles"]["data"]
+        if vehicles and vehicles[0].get("mcSettings"):
+            return ManagedChargeSettings.from_dict(vehicles[0])
+        return None
+
+    async def get_charge_history(
+        self, vehicle_id: str
+    ) -> ChargeHistory | None:
+        """Fetch recent charge history for a vehicle."""
+        data = await self._execute(
+            query=QUERY_CHARGE_HISTORY,
+            variables={
+                "vehicleId": vehicle_id,
+                "chargeEventsLimit": 5,
+                "locationRelationshipTypes": ["home_primary"],
+                "includeArchivedRegistrations": True,
+            },
+            operation_name="userVehiclesHomeChargeHistory",
+        )
+        vehicles = data["data"]["viewer"]["vehicles"]["data"]
+        if vehicles and vehicles[0].get("chargeEvents"):
+            return ChargeHistory.from_dict(vehicles[0]["chargeEvents"])
+        return None
 
     async def _execute(
         self,

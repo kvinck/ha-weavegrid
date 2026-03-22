@@ -99,6 +99,9 @@ query ChargeEventAggregates(
           ) {
             data {
               chargeCost
+              offPeakChargingCost
+              offPeakEnergyDeliveredKwh
+              totalSmartChargingCost
               energyDeliveredKwh
               smartScore
             }
@@ -113,6 +116,74 @@ query ChargeEventAggregates(
               usageDate
               chargeCost
               energyDeliveredKwh
+            }
+          }
+        }
+      }
+    }
+  }
+}
+"""
+
+QUERY_MANAGED_CHARGE_SETTINGS: Final = """
+query ManagedChargeSettings($vehicleId: String!) {
+  viewer {
+    id
+    vehicles(vehicleId: $vehicleId, includeBatteryInfo: true) {
+      data {
+        vehicleId
+        mcSettings {
+          chargeByTimes {
+            Mon
+            Tue
+            Wed
+            Thu
+            Fri
+            Sat
+            Sun
+          }
+          enablePeakAvoidance
+        }
+      }
+    }
+  }
+}
+"""
+
+QUERY_CHARGE_HISTORY: Final = """
+query userVehiclesHomeChargeHistory(
+  $vehicleId: String,
+  $chargeEventsLimit: Int,
+  $locationRelationshipTypes: [RelationshipTypeEnum],
+  $includeArchivedRegistrations: Boolean
+) {
+  viewer {
+    id
+    vehicles(
+      vehicleId: $vehicleId
+      includeArchivedRegistrations: $includeArchivedRegistrations
+    ) {
+      data {
+        vehicleId
+        chargeEvents(
+          first: $chargeEventsLimit
+          locationRelationshipTypes: $locationRelationshipTypes
+        ) {
+          aggregates(aggregateUnit: day) {
+            data {
+              startDttm
+              endDttm
+              chargeHours
+              energyDeliveredKwh
+              chargeCost
+            }
+          }
+          chargeSpans {
+            data {
+              startDttm
+              endDttm
+              electricityRate
+              electricityRateUnit
             }
           }
         }
